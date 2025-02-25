@@ -1,0 +1,474 @@
+#SHOW ALL INDEXES
+GET _cat/indices?v
+
+#CREATE INDEX WITH NAME FRUIT
+PUT /fruits
+
+#LIST OF SHARDS
+GET _cat/shards?v
+
+#SHOW CLUSTER HEALTH
+GET /_cluster/health
+
+PUT students
+GET _cat/indices?v
+GET _cat/shards?v
+
+#SHOW THE SCHEMA OF INDEX
+GET students
+
+#DELETE INDEX
+DELETE students
+
+#CREATE INDEX WITH THESE SETTINGS
+PUT students
+{
+  "settings": {
+    "number_of_replicas": 2,
+    "number_of_shards" : 3
+  }
+}
+
+GET _cat/shards?v
+
+#ADD THE DOCUMENT
+POST students/_doc
+{
+  "name": "sohil",
+  "age": 25
+}
+
+#ADD THE DOCUMENT WITH THE SPECIFIC ID OR REPLACE THE DOCUMENT
+POST students/_doc/NcI-KJUBOmE4S1_NgR8w
+{
+  "name": "sohil1",
+  "age": 25
+}
+
+
+GET students
+
+#DELETE DOCUMENT
+DELETE students/_doc/NcI-KJUBOmE4S1_NgR8w
+
+#ADD DOCUMENT
+POST students/_doc
+{
+  "name": "vishal",
+  "email": "vishal@gmail.com",
+  "age": 30
+}
+
+
+#LIST THE DATA USING QUERY
+GET students/_search
+{
+  "query":{
+    "match_all": {}
+  }
+}
+
+
+#ADD THE DOCUMENT WITH THE SPECIFIC ID OR REPLACE THE DOCUMENT
+POST students/_update/XMJHKJUBOmE4S1_NAR_W
+{
+  "doc":{
+    "age": 25,
+    "lastname": "lalakiya"
+  }
+}
+
+
+
+GET students/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+#UPDATE THE DOCUMENT USING THE SCRIPT
+POST students/_update/XMJHKJUBOmE4S1_NAR_W
+{
+  "script": {
+    "source": "ctx._source.age=5 + params.new_age",
+    "params": {
+      "new_age": 10
+    }
+  }
+}
+
+#USE SCRIPT WITH MULTILINE CONDITION
+POST students/_update/NcI-KJUBOmE4S1_NgR8w
+{
+  "script": {
+    "source": """
+    if(ctx._source.age < 30){
+      ctx._source.age++
+    }else{
+      ctx.op = 'noop'
+    }
+    """
+  }
+}
+
+
+#UPSERT THE DOCUMENT WHEN CONDITION FAILS
+POST students/_update/NcI-KJUBOmE4S1_NgR8
+{
+  "script": {
+    "source": """
+    if(ctx._source.age > 20){
+      ctx._source.age--
+    }else{
+      ctx.op = 'noop'
+    }
+    """
+  },
+  "upsert": {
+    "name": "upserted document",
+    "age": 23
+  }
+}
+
+#REPLACE THE DOCUMENT
+PUT students/_doc/NcI-KJUBOmE4S1_NgR8w
+{
+  "name": "vishal2",
+  "age": 10
+}
+
+
+#UPDATE THE DOCUMENT USING QUERY
+POST students/_update_by_query
+{
+  "query": {
+    "match_all": {}
+  },
+  "script": {
+    "source": "ctx._source.age++"
+  }
+}
+
+
+GET students/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+#DELETE THE DOCUMENT USING THE QUERY
+POST students/_delete_by_query
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+POST students/_doc
+{
+  "name": "sohil",
+  "city": "Ahmedabad",
+  "age": 22
+}
+
+POST students/_doc
+{
+  "name": "rahul",
+  "city": "mumbai",
+  "age": 56
+}
+
+
+GET students/_search
+{
+  "query": {"match_all": {}}
+}
+
+GET students
+
+#BULK API
+POST students/_bulk
+{"index": {}}
+{"name": "vishal", "age": 21}
+{"create":  {}}
+{"name": "vishal", "age": 21}
+{"update": {"_id": "u-J1NpUBOKPMO7KI-9hz"}}
+{"doc": {"age": 25}}
+{"delete": {"_id": "wOJ2NpUBOKPMO7KIoNjV"}}
+
+
+#ANALYZE THE API
+POST _analyze
+{
+  "text": "Hello how are you?, What are you doing?...",
+  "analyzer": "standard"
+}
+
+
+#TYPES OF ANALYZER ARE STANDARD AND WHITESPACE AND MORE...
+#STOP FILTER REMOVE THE STOP WORDS LIKE IS AND ARE FROM THE TOKENS
+POST _analyze
+{
+  "text": "Hello how are you?, What are you doing?...",
+  "char_filter": [],
+  "tokenizer": "standard",
+  "filter": ["lowercase", "stop"]
+}
+
+
+#USED TO CHECK MAPPING
+GET students/_mapping
+
+#ADD DYNAMIC MAPPIING
+#WHEN ADD DYNAMIC FALSE IT WILL ADD THE DOCUMENT WHICH HAVE ANOTHER FIELDS FROM SCHEMA BUT IT WILL NOT CREATE THE SPACE OR STORAGE FOR THAT EXXTRA FIELDS AND IF DYNAMIC IS TRUE THEN NEW FIELD WILL MAP AUTOMATICALLY
+
+#WHILE HAVING DYNAMIC AS "STRICT" YOU CAN NOT ADD DOCUMENT WHICH HAVE FIELD WHICH IS NOT PRESENT IN SCHEMA
+PUT movies
+{
+  "mappings": {
+    "dynamic": false,
+    "properties": {
+      "name": {
+        "type": "text"
+      },
+      "rating": {
+        "type": "float"
+      },
+      "budget": {
+        "type": "float"
+      },
+      "directors": {
+        "properties": {
+          "name": {
+            "type": "text"
+          },
+          "email": {
+            "type": "keyword"
+          }
+        }
+      },
+      "description": {
+        "type": "text"
+      },
+      "actors": {
+        "type": "nested",
+        "properties": {
+          "name": {
+            "type": "text"
+          },
+          "age": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+POST movies/_doc
+{
+  "name": "Bollywood movie",
+  "rating": 7.8,
+  "budget": 45000000.00,
+  "directors": {
+    "name": "director1",
+    "email": "dir1@gmail.com"
+  },
+  "description": "This is movie data",
+  "actors": [
+    {
+      "name": "actor1",
+      "age": 25
+    },
+    {
+      "name": "actor2",
+      "age": 24
+    },
+    {
+      "name": "actor3",
+      "age": 26
+    }
+  ]
+}
+
+GET movies/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+PUT employee
+{
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "name": {
+        "type": "text"
+      },
+      "age": {
+        "type": "integer"
+      }
+    }
+  }
+}
+
+GET employee/_mapping
+
+POST employee/_doc
+{
+  "name": "sohil",
+  "age": 25
+}
+
+
+POST employee/_doc
+{
+  "name": "vishal",
+  "age": 27,
+  "lastname": "lalakiya"
+}
+
+DELETE employee
+
+
+DELETE students
+
+#REINDEX OR UPDATE MAPPING
+PUT students
+
+POST students/_doc
+{
+  "name": "sohil",
+  "age": 25
+}
+
+POST students/_doc
+{
+  "name": "vishal",
+  "age": 26
+}
+
+GET students/_mapping
+
+PUT students_new
+
+POST _reindex
+{
+  "source": {
+    "index": "students"
+  },
+  "dest": {
+    "index": "students_new"
+  },
+  "script": {
+    "source": "ctx._source.id = ctx._source.name + ctx._source.age"
+  }
+}
+
+GET students_new/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+#index template create and use
+PUT _index_template/student_template
+{
+  "index_patterns": ["student_class_*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 2,
+      "number_of_replicas": 2
+    },
+    "mappings": {
+      "properties": {
+        "name": {
+          "type": "text"
+        },
+        "email": {
+          "type": "keyword"
+        },
+        "dob": {
+          "type": "date"
+        }
+      }
+    }
+  }
+}
+
+POST student_class_1/_doc
+{
+  "name": "sohil",
+  "email": "sohil@gmail.com",
+  "dob": "2000-12-31"
+}
+
+
+#GET TEMPLATE DETAILS
+GET _index_template/student_template
+
+#DELETE TEMPLATE
+DELETE _index_template/student_template
+
+PUT customer_data3
+
+POST _reindex
+{
+  "source": {
+    "index": "customer_data"
+  },
+  "dest": {
+    "index": "customer_data3"
+  }
+}
+
+GET customer_data2/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET customer_data/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+POST _aliases
+{
+  "actions": [
+    {
+      "remove": {
+        "index": "customer_data",
+        "alias": "customers"
+      }
+    },
+    {
+      "add":{
+        "index": "customer_data",
+        "alias": "customers"
+      }
+    },
+    {"add": {
+        "index": "customer_data2",
+        "alias": "customers"
+      }}
+    ]
+}
+
+GET customers/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
